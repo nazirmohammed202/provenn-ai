@@ -1,0 +1,5 @@
+import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+import { extractText } from "@/lib/parser"; import { hashDocument } from "@/lib/hash"; import { analyzeContract } from "@/lib/ai"; import { saveAnalysis } from "@/lib/store"; import { setAnalysisCookie } from "@/lib/session";
+export const runtime = "nodejs";
+export async function POST(request: Request) { try { const form = await request.formData(); const file = form.get("file"); if (!(file instanceof File)) return NextResponse.json({ error: "A contract file is required." }, { status: 400 }); if (file.size > 15 * 1024 * 1024) return NextResponse.json({ error: "Files must be under 15 MB." }, { status: 400 }); const bytes = await file.arrayBuffer(); const text = await extractText(file); const id = randomUUID(); const record = { id, hash: hashDocument(bytes), fileName: file.name, analysis: await analyzeContract(text), createdAt: new Date().toISOString() }; await saveAnalysis(record); await setAnalysisCookie(id); return NextResponse.json(record); } catch (e) { return NextResponse.json({ error: e instanceof Error ? e.message : "Analysis failed." }, { status: 422 }); } }

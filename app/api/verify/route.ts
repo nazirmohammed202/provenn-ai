@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { hashDocument } from "@/lib/hash"; import { getProof } from "@/lib/blockchain";
+export async function POST(request: Request) { const form = await request.formData(); const file = form.get("file"); if (!(file instanceof File)) return NextResponse.json({ error: "A file is required" }, { status: 400 }); const hash = hashDocument(await file.arrayBuffer()); return NextResponse.json({ hash, proof: await getProof(hash) }); }

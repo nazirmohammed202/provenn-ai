@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { getProof } from "@/lib/blockchain";
+export async function GET(_: Request, { params }: { params: Promise<{ hash: string }> }) { const { hash } = await params; if (!/^0x[\da-f]{64}$/i.test(hash)) return NextResponse.json({ error: "Invalid SHA-256 hash" }, { status: 400 }); return NextResponse.json({ proof: await getProof(hash as `0x${string}`) }); }
