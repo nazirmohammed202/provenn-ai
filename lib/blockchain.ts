@@ -42,17 +42,23 @@ export async function getProof(hash: `0x${string}`): Promise<ProofRecord | null>
     });
     if (record[1] === BigInt(0)) return null;
 
-    const logs = await client.getLogs({
-      address,
-      event: hashStoredEvent,
-      args: { hash },
-    });
+    let transactionHash: string | null = null;
+    try {
+      const logs = await client.getLogs({
+        address,
+        event: hashStoredEvent,
+        args: { hash },
+      });
+      transactionHash = logs.at(-1)?.transactionHash || null;
+    } catch {
+      // Record exists even if log lookup fails (RPC range limits, etc.).
+    }
 
     return {
       hash,
       owner: record[2],
       timestamp: Number(record[1]),
-      transactionHash: logs.at(-1)?.transactionHash || null,
+      transactionHash,
     };
   } catch {
     return null;
@@ -71,7 +77,9 @@ function managedPrivateKey() {
   return key as `0x${string}`;
 }
 
-export async function storeManagedProof(hash: `0x${string}`): Promise<ProofRecord> {
+export async function storeManagedProof(
+  hash: `0x${string}`,
+): Promise<{ proof: ProofRecord; alreadySecured: boolean }> {
   const address = contractAddress();
   const privateKey = managedPrivateKey();
   if (!address || !privateKey) {
@@ -79,7 +87,7 @@ export async function storeManagedProof(hash: `0x${string}`): Promise<ProofRecor
   }
 
   const existing = await getProof(hash);
-  if (existing) return existing;
+  if (existing) return { proof: existing, alreadySecured: true };
 
   const account = privateKeyToAccount(privateKey);
   const wallet = createWalletClient({
@@ -97,9 +105,12 @@ export async function storeManagedProof(hash: `0x${string}`): Promise<ProofRecor
   });
 
   return {
-    hash,
-    owner: account.address,
-    timestamp: Math.floor(Date.now() / 1000),
-    transactionHash: tx,
+    proof: {
+      hash,
+      owner: account.address,
+      timestamp: Math.floor(Date.now() / 1000),
+      transactionHash: tx,
+    },
+    alreadySecured: false,
   };
 }

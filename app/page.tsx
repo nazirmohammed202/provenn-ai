@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import Link from "next/link";
+import { BrandLogo, BrandMark } from "@/components/brand-logo";
 
 export default function Home() {
   const input = useRef<HTMLInputElement>(null);
@@ -24,7 +25,11 @@ export default function Home() {
       toast.error(data.error || "Analysis failed");
       return;
     }
-    toast.success("Analysis ready");
+    toast.success(
+      data.proof
+        ? "Analysis ready — already secured on Monad"
+        : "Analysis ready",
+    );
     router.push(`/analyze?id=${data.id}`);
   }
 
@@ -33,9 +38,7 @@ export default function Home() {
       <header className="landing-hero">
         <div className="shell">
           <nav className="nav nav-dark">
-            <Link className="brand" href="/">
-              provenn<span>.</span>
-            </Link>
+            <BrandLogo light />
             <Link className="pill" href="/verify">
               Verify a document
             </Link>
@@ -49,7 +52,10 @@ export default function Home() {
               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className="eyebrow">Contract intelligence, with proof</div>
-              <div className="hero-brand">provenn.</div>
+              <div className="hero-brand-row">
+                <BrandMark light className="hero-brand-mark" />
+                <div className="hero-brand">provenn.</div>
+              </div>
               <h1>Understand every contract in seconds.</h1>
               <p>
                 AI explains legal documents in plain English while Monad

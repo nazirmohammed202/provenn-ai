@@ -36,10 +36,13 @@ vi.mock("@/lib/session", () => ({
 
 vi.mock("@/lib/blockchain", () => ({
   storeManagedProof: vi.fn(async () => ({
-    hash: "0x" + "ab".repeat(32),
-    owner: "0x1111111111111111111111111111111111111111",
-    timestamp: 1700000000,
-    transactionHash: "0x" + "cd".repeat(32),
+    proof: {
+      hash: "0x" + "ab".repeat(32),
+      owner: "0x1111111111111111111111111111111111111111",
+      timestamp: 1700000000,
+      transactionHash: "0x" + "cd".repeat(32),
+    },
+    alreadySecured: false,
   })),
   getProof: vi.fn(async () => null),
   explorerBase: () => "https://testnet.monadexplorer.com",

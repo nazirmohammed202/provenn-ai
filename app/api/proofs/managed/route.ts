@@ -34,7 +34,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Analysis expired." }, { status: 404 });
     }
 
-    return NextResponse.json({ proof: await storeManagedProof(item.hash) });
+    const result = await storeManagedProof(item.hash);
+    return NextResponse.json(result);
   } catch (e) {
     return NextResponse.json(
       { error: mapServiceError(e, "Unable to secure proof.") },

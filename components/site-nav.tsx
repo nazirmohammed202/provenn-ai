@@ -1,3 +1,4 @@
+import { BrandLogo } from "@/components/brand-logo";
 import Link from "next/link";
 
 export function SiteNav({
@@ -11,9 +12,7 @@ export function SiteNav({
 }) {
   return (
     <nav className={`nav shell ${dark ? "nav-dark" : ""}`}>
-      <Link className="brand" href="/">
-        provenn<span>.</span>
-      </Link>
+      <BrandLogo light={dark} />
       <Link className={dark ? "pill" : "pill-light"} href={ctaHref}>
         {ctaLabel}
       </Link>

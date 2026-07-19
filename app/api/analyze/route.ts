@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { extractText } from "@/lib/parser";
 import { hashDocument } from "@/lib/hash";
 import { analyzeContract } from "@/lib/ai";
+import { getProof } from "@/lib/blockchain";
 import { saveAnalysis, toPublicAnalysis } from "@/lib/store";
 import { attachAnalysisCookie } from "@/lib/session";
 import { mapServiceError } from "@/lib/errors";
@@ -34,9 +35,10 @@ export async function POST(request: Request) {
     const text = await extractText(file);
     const id = randomUUID();
     const createdAt = new Date();
+    const hash = hashDocument(bytes);
     const record = {
       id,
-      hash: hashDocument(bytes),
+      hash,
       fileName: file.name,
       analysis: await analyzeContract(text),
       extractedText: text,
@@ -45,7 +47,10 @@ export async function POST(request: Request) {
     };
 
     await saveAnalysis(record);
-    const response = NextResponse.json(toPublicAnalysis(record));
+    const response = NextResponse.json({
+      ...toPublicAnalysis(record),
+      proof: await getProof(hash),
+    });
     return attachAnalysisCookie(response, id);
   } catch (e) {
     return NextResponse.json(

@@ -16,6 +16,10 @@ const display = Fraunces({
 export const metadata: Metadata = {
   title: "Provenn AI | Contract Intelligence",
   description: "Understand every contract. Prove every version on Monad.",
+  icons: {
+    icon: [{ url: "/provenn-mark.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/provenn-mark.svg" }],
+  },
 };
 
 export default function RootLayout({
