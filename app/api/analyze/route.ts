@@ -1,5 +1,56 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { extractText } from "@/lib/parser"; import { hashDocument } from "@/lib/hash"; import { analyzeContract } from "@/lib/ai"; import { saveAnalysis } from "@/lib/store"; import { setAnalysisCookie } from "@/lib/session";
+import { extractText } from "@/lib/parser";
+import { hashDocument } from "@/lib/hash";
+import { analyzeContract } from "@/lib/ai";
+import { saveAnalysis, toPublicAnalysis } from "@/lib/store";
+import { attachAnalysisCookie } from "@/lib/session";
+import { mapServiceError } from "@/lib/errors";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
+
 export const runtime = "nodejs";
-export async function POST(request: Request) { try { const form = await request.formData(); const file = form.get("file"); if (!(file instanceof File)) return NextResponse.json({ error: "A contract file is required." }, { status: 400 }); if (file.size > 15 * 1024 * 1024) return NextResponse.json({ error: "Files must be under 15 MB." }, { status: 400 }); const bytes = await file.arrayBuffer(); const text = await extractText(file); const id = randomUUID(); const record = { id, hash: hashDocument(bytes), fileName: file.name, analysis: await analyzeContract(text), createdAt: new Date().toISOString() }; await saveAnalysis(record); await setAnalysisCookie(id); return NextResponse.json(record); } catch (e) { return NextResponse.json({ error: e instanceof Error ? e.message : "Analysis failed." }, { status: 422 }); } }
+
+export async function POST(request: Request) {
+  try {
+    const ip = clientIp(request);
+    const limited = rateLimit(`analyze:${ip}`, 20);
+    if (!limited.ok) {
+      return NextResponse.json(
+        { error: "Rate limit reached. Try again later." },
+        { status: 429 },
+      );
+    }
+
+    const form = await request.formData();
+    const file = form.get("file");
+    if (!(file instanceof File)) {
+      return NextResponse.json(
+        { error: "A contract file is required." },
+        { status: 400 },
+      );
+    }
+
+    const bytes = await file.arrayBuffer();
+    const text = await extractText(file);
+    const id = randomUUID();
+    const createdAt = new Date();
+    const record = {
+      id,
+      hash: hashDocument(bytes),
+      fileName: file.name,
+      analysis: await analyzeContract(text),
+      extractedText: text,
+      createdAt: createdAt.toISOString(),
+      expiresAt: new Date(createdAt.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+    };
+
+    await saveAnalysis(record);
+    const response = NextResponse.json(toPublicAnalysis(record));
+    return attachAnalysisCookie(response, id);
+  } catch (e) {
+    return NextResponse.json(
+      { error: mapServiceError(e, "Analysis failed.") },
+      { status: 422 },
+    );
+  }
+}

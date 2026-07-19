@@ -1,2 +1,24 @@
-import { NextResponse } from "next/server"; import { getAnalysis } from "@/lib/store"; import { hasAnalysisAccess } from "@/lib/session"; import { getProof } from "@/lib/blockchain";
-export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) { const { id } = await params; if (!await hasAnalysisAccess(id)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); const item = await getAnalysis(id); if (!item) return NextResponse.json({ error: "Analysis expired" }, { status: 404 }); return NextResponse.json({ ...item, proof: await getProof(item.hash) }); }
+import { NextResponse } from "next/server";
+import { getAnalysis, toPublicAnalysis } from "@/lib/store";
+import { hasAnalysisAccess } from "@/lib/session";
+import { getProof } from "@/lib/blockchain";
+
+export async function GET(
+  _: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  if (!(await hasAnalysisAccess(id))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const item = await getAnalysis(id);
+  if (!item) {
+    return NextResponse.json({ error: "Analysis expired" }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    ...toPublicAnalysis(item),
+    proof: await getProof(item.hash),
+  });
+}
