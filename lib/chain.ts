@@ -25,8 +25,15 @@ export const monadChain = {
 } as const;
 
 export function contractAddress() {
-  return (process.env.NEXT_PUBLIC_MONAD_CONTRACT_ADDRESS ||
-    process.env.MONAD_CONTRACT_ADDRESS) as Address | undefined;
+  let address = (
+    process.env.NEXT_PUBLIC_MONAD_CONTRACT_ADDRESS ||
+    process.env.MONAD_CONTRACT_ADDRESS ||
+    ""
+  ).trim();
+  if (!address) return undefined;
+  if (!address.startsWith("0x")) address = `0x${address}`;
+  if (!/^0x[0-9a-fA-F]{40}$/.test(address)) return undefined;
+  return address as Address;
 }
 
 export function explorerBase() {

@@ -59,18 +59,29 @@ export async function getProof(hash: `0x${string}`): Promise<ProofRecord | null>
   }
 }
 
+function managedPrivateKey() {
+  let key = (process.env.MANAGED_WALLET_PRIVATE_KEY || "").trim();
+  if (!key) return null;
+  if (!key.startsWith("0x")) key = `0x${key}`;
+  if (!/^0x[0-9a-fA-F]{64}$/.test(key)) {
+    throw new Error(
+      "MANAGED_WALLET_PRIVATE_KEY must be a 0x-prefixed 32-byte hex private key.",
+    );
+  }
+  return key as `0x${string}`;
+}
+
 export async function storeManagedProof(hash: `0x${string}`): Promise<ProofRecord> {
   const address = contractAddress();
-  if (!address || !process.env.MANAGED_WALLET_PRIVATE_KEY) {
+  const privateKey = managedPrivateKey();
+  if (!address || !privateKey) {
     throw new Error("Managed Monad proof is not configured.");
   }
 
   const existing = await getProof(hash);
   if (existing) return existing;
 
-  const account = privateKeyToAccount(
-    process.env.MANAGED_WALLET_PRIVATE_KEY as `0x${string}`,
-  );
+  const account = privateKeyToAccount(privateKey);
   const wallet = createWalletClient({
     account,
     chain: monadChain,
