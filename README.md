@@ -35,7 +35,7 @@ npm run contracts:deploy
 
 ## Flow
 
-1. Upload PDF / DOCX / TXT → Gemini analysis (no wallet required)
+1. Upload PDF / DOCX / TXT → Provenn AI analysis (no wallet required)
 2. Review risks, parties, dates, obligations on `/analyze`
 3. Secure proof via managed signer (Turnstile + rate limits) or injected wallet
 4. Verify a copy on `/verify` against Monad
