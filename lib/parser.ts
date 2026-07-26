@@ -15,6 +15,35 @@ function extension(name: string) {
   return i >= 0 ? name.slice(i).toLowerCase() : "";
 }
 
+const PDF_READ_ERROR =
+  "This PDF could not be read. Re-export it from your editor or try uploading a DOCX or TXT copy instead.";
+
+function pdfReadError(error: unknown): Error {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/password|encrypted|needs password/i.test(message)) {
+    return new Error(
+      "This PDF is password-protected. Remove the password and upload again.",
+    );
+  }
+  if (/bad XRef|InvalidPDF|corrupt|malformed|xref/i.test(message)) {
+    return new Error(PDF_READ_ERROR);
+  }
+  return new Error(PDF_READ_ERROR);
+}
+
+async function extractPdfText(buffer: Buffer): Promise<string> {
+  const { extractText, getDocumentProxy } = await import("unpdf");
+  const data = new Uint8Array(buffer);
+
+  try {
+    const pdf = await getDocumentProxy(data, { stopAtErrors: false });
+    const { text } = await extractText(pdf, { mergePages: true });
+    return Array.isArray(text) ? text.join("\n\n") : text;
+  } catch (error) {
+    throw pdfReadError(error);
+  }
+}
+
 export function validateUploadMeta(file: File) {
   const ext = extension(file.name);
   if (!ALLOWED_EXT.has(ext)) {
@@ -39,8 +68,7 @@ export async function extractText(file: File): Promise<string> {
     const mammoth = await import("mammoth");
     text = (await mammoth.extractRawText({ buffer })).value;
   } else if (ext === ".pdf") {
-    const pdf = (await import("pdf-parse")).default;
-    text = (await pdf(buffer)).text;
+    text = await extractPdfText(buffer);
   } else {
     throw new Error("Please upload a PDF, DOCX, or plain text contract.");
   }

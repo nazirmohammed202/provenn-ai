@@ -16,6 +16,7 @@ export function mapServiceError(error: unknown, fallback: string) {
     return "The managed wallet cannot pay gas on Monad.";
   if (/Proof already exists/i.test(message))
     return "This document hash is already secured on Monad.";
+  if (/password-protected|could not be read/i.test(message)) return message;
 
   return message.length > 180 ? fallback : message;
 }
