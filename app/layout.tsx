@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { SiteFooter } from "@/components/site-footer";
 import { AppToaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -32,6 +33,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${sans.variable} ${display.variable} ${sans.className}`}>
         {children}
+        <SiteFooter />
         <AppToaster />
         <Analytics />
       </body>

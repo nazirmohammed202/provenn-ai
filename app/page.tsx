@@ -200,12 +200,6 @@ export default function Home() {
           </div>
         </section>
       </main>
-
-      <footer className="footer">
-        <div className="shell">
-          Provenn AI · Understand every contract. Prove every version.
-        </div>
-      </footer>
     </>
   );
 }
